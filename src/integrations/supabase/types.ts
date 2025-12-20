@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_history: {
+        Row: {
+          backup_type: string
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_size: number
+          id: string
+          summary: Json
+          total_records: number
+        }
+        Insert: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_size?: number
+          id?: string
+          summary?: Json
+          total_records?: number
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_size?: number
+          id?: string
+          summary?: Json
+          total_records?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_history_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operational_expenses: {
         Row: {
           amount: number
