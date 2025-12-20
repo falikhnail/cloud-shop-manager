@@ -31,6 +31,7 @@ const adminMenuItems = [
   { icon: Receipt, label: 'Transaksi', path: '/transactions' },
   { icon: BarChart3, label: 'Laporan Penjualan', path: '/reports' },
   { icon: TrendingUp, label: 'Laba Rugi', path: '/profit-report' },
+  { icon: Wallet, label: 'Pembayaran Supplier', path: '/supplier-payment-report' },
   { icon: Users, label: 'Users', path: '/users' },
   { icon: Settings, label: 'Pengaturan', path: '/settings' },
 ];
