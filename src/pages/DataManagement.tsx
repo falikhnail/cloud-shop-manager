@@ -23,7 +23,9 @@ import {
   Truck,
   FileJson,
   Clock,
-  HardDrive
+  HardDrive,
+  History,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -74,6 +76,16 @@ interface SyncStatus {
   message?: string;
 }
 
+interface BackupHistoryItem {
+  id: string;
+  file_name: string;
+  file_size: number;
+  backup_type: string;
+  total_records: number;
+  summary: any;
+  created_at: string;
+}
+
 export default function DataManagement() {
   const { settings } = useStore();
   const [summary, setSummary] = useState<DataSummary | null>(null);
@@ -86,6 +98,8 @@ export default function DataManagement() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<BackupData | null>(null);
+  const [backupHistory, setBackupHistory] = useState<BackupHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     lastSync: null,
     status: 'idle'
@@ -143,8 +157,28 @@ export default function DataManagement() {
     }
   };
 
+  // Fetch backup history
+  const fetchBackupHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('backup_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setBackupHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching backup history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   useEffect(() => {
     fetchSummary();
+    fetchBackupHistory();
   }, []);
 
   // Export all data to JSON
@@ -202,19 +236,49 @@ export default function DataManagement() {
       };
 
       // Create and download file
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const fileName = `backup_${settings.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.json`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `backup_${settings.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.json`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      // Get current user profile for created_by
+      const { data: { user } } = await supabase.auth.getUser();
+      let createdBy: string | null = null;
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (profile) createdBy = profile.id;
+      }
+
+      // Save backup history to database
+      const totalRecords = Object.values(backupData.summary).reduce((a, b) => a + b, 0);
+      await supabase.from('backup_history').insert([{
+        file_name: fileName,
+        file_size: blob.size,
+        backup_type: 'manual',
+        total_records: totalRecords,
+        summary: backupData.summary as any,
+        created_by: createdBy,
+      }]);
+
+      // Refresh history
+      fetchBackupHistory();
+
       toast({ 
         title: 'Backup Berhasil', 
-        description: `Data berhasil di-export (${Object.values(backupData.summary).reduce((a, b) => a + b, 0)} records)` 
+        description: `Data berhasil di-export (${totalRecords} records)` 
       });
     } catch (error) {
       console.error('Export error:', error);
@@ -648,6 +712,87 @@ export default function DataManagement() {
                   </p>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Backup History */}
+        <div className="rounded-lg border border-border bg-card p-6 animate-slide-up" style={{ animationDelay: '250ms' }}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <History className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Riwayat Backup</h2>
+            </div>
+            <Button variant="ghost" size="sm" onClick={fetchBackupHistory} disabled={isLoadingHistory}>
+              <RefreshCw className={cn("w-4 h-4", isLoadingHistory && "animate-spin")} />
+            </Button>
+          </div>
+
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-foreground" />
+            </div>
+          ) : backupHistory.length === 0 ? (
+            <div className="text-center py-8">
+              <FileJson className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Belum ada riwayat backup</p>
+              <p className="text-sm text-muted-foreground mt-1">Klik "Export Backup" untuk membuat backup pertama</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Nama File</th>
+                    <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Tanggal</th>
+                    <th className="text-right p-3 text-sm font-semibold text-muted-foreground">Ukuran</th>
+                    <th className="text-right p-3 text-sm font-semibold text-muted-foreground">Records</th>
+                    <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Tipe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {backupHistory.map((backup) => (
+                    <tr key={backup.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <FileJson className="w-4 h-4 text-primary shrink-0" />
+                          <span className="text-foreground text-sm font-medium truncate max-w-[200px]">
+                            {backup.file_name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-foreground text-sm">
+                          {format(new Date(backup.created_at), 'dd MMM yyyy', { locale: localeId })}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {format(new Date(backup.created_at), 'HH:mm')}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <span className="text-muted-foreground text-sm">
+                          {(backup.file_size / 1024).toFixed(1)} KB
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <span className="font-medium text-foreground text-sm">
+                          {backup.total_records.toLocaleString('id-ID')}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                          backup.backup_type === 'manual' 
+                            ? "bg-primary/10 text-primary"
+                            : "bg-success/10 text-success"
+                        )}>
+                          {backup.backup_type === 'manual' ? 'Manual' : 'Otomatis'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
