@@ -14,7 +14,8 @@ import {
   Sun,
   ShoppingBag,
   Wallet,
-  TrendingUp
+  TrendingUp,
+  Database
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from 'next-themes';
@@ -32,6 +33,7 @@ const adminMenuItems = [
   { icon: BarChart3, label: 'Laporan Penjualan', path: '/reports' },
   { icon: TrendingUp, label: 'Laba Rugi', path: '/profit-report' },
   { icon: Wallet, label: 'Pembayaran Supplier', path: '/supplier-payment-report' },
+  { icon: Database, label: 'Manajemen Data', path: '/data-management' },
   { icon: Users, label: 'Users', path: '/users' },
   { icon: Settings, label: 'Pengaturan', path: '/settings' },
 ];
