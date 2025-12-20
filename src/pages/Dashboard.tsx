@@ -1,6 +1,7 @@
 import { DollarSign, ShoppingCart, Package, TrendingUp, ArrowUpRight, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { DueBillsAlert } from '@/components/dashboard/DueBillsAlert';
 import { useProducts } from '@/hooks/useProducts';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -175,6 +176,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Due Bills Alert */}
+        <DueBillsAlert />
 
         {/* Low Stock Alert */}
         {lowStockProducts > 0 && (
