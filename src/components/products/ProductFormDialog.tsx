@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { formatNumberInput, parseFormattedNumber } from '@/lib/utils';
 import type { Product } from '@/types';
 
 const productSchema = z.object({
@@ -47,18 +48,38 @@ export function ProductFormDialog({
     image: '',
   });
 
+  // Display values for formatted inputs
+  const [displayPrice, setDisplayPrice] = useState('');
+  const [displaySellingPrice, setDisplaySellingPrice] = useState('');
+
   useEffect(() => {
     if (!isOpen) return;
 
-    setValues({
+    const newValues = {
       name: product?.name ?? '',
       category: product?.category ?? '',
       price: product?.price ?? 0,
       sellingPrice: product?.sellingPrice ?? 0,
       stock: product?.stock ?? 0,
       image: product?.image ?? '',
-    });
+    };
+    
+    setValues(newValues);
+    setDisplayPrice(newValues.price > 0 ? formatNumberInput(String(newValues.price)) : '');
+    setDisplaySellingPrice(newValues.sellingPrice > 0 ? formatNumberInput(String(newValues.sellingPrice)) : '');
   }, [isOpen, product]);
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumberInput(e.target.value);
+    setDisplayPrice(formatted);
+    setValues((p) => ({ ...p, price: parseFormattedNumber(e.target.value) }));
+  };
+
+  const handleSellingPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumberInput(e.target.value);
+    setDisplaySellingPrice(formatted);
+    setValues((p) => ({ ...p, sellingPrice: parseFormattedNumber(e.target.value) }));
+  };
 
   const submit = async () => {
     const parsed = productSchema.safeParse(values);
@@ -110,23 +131,29 @@ export function ProductFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Harga Beli</label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={String(values.price)}
-                onChange={(e) => setValues((p) => ({ ...p, price: Number(e.target.value) }))}
-                placeholder="0"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">Rp</span>
+                <Input
+                  inputMode="numeric"
+                  value={displayPrice}
+                  onChange={handlePriceChange}
+                  placeholder="0"
+                  className="pl-9"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Harga Jual</label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={String(values.sellingPrice)}
-                onChange={(e) => setValues((p) => ({ ...p, sellingPrice: Number(e.target.value) }))}
-                placeholder="0"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">Rp</span>
+                <Input
+                  inputMode="numeric"
+                  value={displaySellingPrice}
+                  onChange={handleSellingPriceChange}
+                  placeholder="0"
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
 

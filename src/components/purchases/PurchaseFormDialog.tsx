@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Supplier, Product, PaymentStatus } from '@/types';
+import { formatNumberInput, parseFormattedNumber, formatCurrency } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ interface PurchaseItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  displayPrice: string;
 }
 
 interface PurchaseFormDialogProps {
@@ -46,7 +48,7 @@ export function PurchaseFormDialog({
 }: PurchaseFormDialogProps) {
   const [supplierId, setSupplierId] = useState<string>('');
   const [items, setItems] = useState<PurchaseItem[]>([
-    { id: '1', productId: '', productName: '', quantity: 1, unitPrice: 0 },
+    { id: '1', productId: '', productName: '', quantity: 1, unitPrice: 0, displayPrice: '' },
   ]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('pending');
   const [notes, setNotes] = useState('');
@@ -65,7 +67,7 @@ export function PurchaseFormDialog({
 
   const resetForm = () => {
     setSupplierId('');
-    setItems([{ id: '1', productId: '', productName: '', quantity: 1, unitPrice: 0 }]);
+    setItems([{ id: '1', productId: '', productName: '', quantity: 1, unitPrice: 0, displayPrice: '' }]);
     setPaymentStatus('pending');
     setNotes('');
   };
@@ -76,7 +78,8 @@ export function PurchaseFormDialog({
       productId: '', 
       productName: '', 
       quantity: 1, 
-      unitPrice: 0 
+      unitPrice: 0,
+      displayPrice: ''
     }]);
   };
 
@@ -91,15 +94,31 @@ export function PurchaseFormDialog({
       
       if (field === 'productId') {
         const selectedProduct = products.find(p => p.id === value);
+        const price = selectedProduct?.price ?? 0;
         return {
           ...item,
           productId: value as string,
           productName: selectedProduct?.name ?? '',
-          unitPrice: selectedProduct?.price ?? 0,
+          unitPrice: price,
+          displayPrice: price > 0 ? formatNumberInput(String(price)) : '',
         };
       }
       
       return { ...item, [field]: value };
+    }));
+  };
+
+  const handlePriceChange = (id: string, rawValue: string) => {
+    const formatted = formatNumberInput(rawValue);
+    const numericValue = parseFormattedNumber(rawValue);
+    
+    setItems(items.map(item => {
+      if (item.id !== id) return item;
+      return {
+        ...item,
+        unitPrice: numericValue,
+        displayPrice: formatted,
+      };
     }));
   };
 
@@ -210,18 +229,21 @@ export function PurchaseFormDialog({
                   </div>
                   
                   <div className="w-32">
-                    <Input
-                      type="number"
-                      value={String(item.unitPrice)}
-                      onChange={(e) => updateItem(item.id, 'unitPrice', Number(e.target.value))}
-                      placeholder="Harga"
-                      min={0}
-                    />
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">Rp</span>
+                      <Input
+                        inputMode="numeric"
+                        value={item.displayPrice}
+                        onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                        placeholder="0"
+                        className="pl-7"
+                      />
+                    </div>
                   </div>
                   
                   <div className="w-28 text-right pt-2">
                     <span className="text-sm font-medium text-foreground">
-                      Rp {(item.quantity * item.unitPrice).toLocaleString('id-ID')}
+                      {formatCurrency(item.quantity * item.unitPrice)}
                     </span>
                   </div>
                   
@@ -243,7 +265,7 @@ export function PurchaseFormDialog({
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Total</p>
                 <p className="text-xl font-bold text-foreground">
-                  Rp {total.toLocaleString('id-ID')}
+                  {formatCurrency(total)}
                 </p>
               </div>
             </div>

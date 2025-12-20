@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { OperationalExpense } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatNumberInput, parseFormattedNumber } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -58,23 +58,33 @@ export function ExpenseFormDialog({
     expenseDate: new Date(),
     category: 'Lainnya',
   });
+  const [displayAmount, setDisplayAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    setValues({
+    const newValues = {
       description: expense?.description ?? '',
       amount: expense?.amount ?? 0,
       expenseDate: expense?.expenseDate ?? new Date(),
       category: expense?.category ?? 'Lainnya',
-    });
+    };
+    
+    setValues(newValues);
+    setDisplayAmount(newValues.amount > 0 ? formatNumberInput(String(newValues.amount)) : '');
   }, [isOpen, expense]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       onClose();
     }
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumberInput(e.target.value);
+    setDisplayAmount(formatted);
+    setValues((p) => ({ ...p, amount: parseFormattedNumber(e.target.value) }));
   };
 
   const submit = async () => {
@@ -118,13 +128,16 @@ export function ExpenseFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Jumlah</label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={String(values.amount)}
-                onChange={(e) => setValues((p) => ({ ...p, amount: Number(e.target.value) }))}
-                placeholder="0"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">Rp</span>
+                <Input
+                  inputMode="numeric"
+                  value={displayAmount}
+                  onChange={handleAmountChange}
+                  placeholder="0"
+                  className="pl-9"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
