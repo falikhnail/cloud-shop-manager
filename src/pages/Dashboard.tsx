@@ -6,6 +6,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, format } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
 
 interface TransactionData {
   id: string;
@@ -84,7 +85,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Penjualan Hari Ini"
-            value={`Rp ${todaySales.toLocaleString('id-ID')}`}
+            value={formatCurrency(todaySales)}
             change={`${totalTransactions} transaksi`}
             changeType="positive"
             icon={DollarSign}
@@ -108,7 +109,7 @@ export default function Dashboard() {
           />
           <StatCard
             title="Rata-rata Transaksi"
-            value={`Rp ${avgTransaction.toLocaleString('id-ID')}`}
+            value={formatCurrency(avgTransaction)}
             change="Per transaksi"
             changeType="positive"
             icon={TrendingUp}
@@ -144,7 +145,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-foreground">
-                        Rp {transaction.total.toLocaleString('id-ID')}
+                        {formatCurrency(transaction.total)}
                       </p>
                       <p className="text-xs text-muted-foreground uppercase">{transaction.payment_method}</p>
                     </div>

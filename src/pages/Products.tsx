@@ -7,7 +7,7 @@ import { ProductFormDialog } from '@/components/products/ProductFormDialog';
 import { toast } from '@/hooks/use-toast';
 import { useProducts } from '@/hooks/useProducts';
 import type { Product } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,12 +155,12 @@ export default function Products() {
                       </td>
                       <td className="p-4 text-right">
                         <span className="font-medium text-muted-foreground">
-                          Rp {product.price.toLocaleString('id-ID')}
+                          {formatCurrency(product.price)}
                         </span>
                       </td>
                       <td className="p-4 text-right">
                         <span className="font-medium text-foreground">
-                          Rp {product.sellingPrice.toLocaleString('id-ID')}
+                          {formatCurrency(product.sellingPrice)}
                         </span>
                       </td>
                       <td className="p-4 text-right">

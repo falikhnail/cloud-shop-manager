@@ -41,7 +41,7 @@ import {
 } from '@/hooks/useFetchTransactions';
 import { useStore } from '@/context/StoreContext';
 import { exportToPDF, exportToExcel } from '@/lib/exportReport';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatShortCurrency } from '@/lib/utils';
 import { subDays, startOfDay, format, isWithinInterval, endOfDay } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
@@ -132,7 +132,7 @@ export default function Reports() {
   const topProducts = useMemo(() => getTopProducts(filteredTransactions, 5), [filteredTransactions]);
   const cashierPerformance = useMemo(() => getCashierPerformance(filteredTransactions), [filteredTransactions]);
 
-  const formatFullCurrency = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
+  
 
   const periodLabels = {
     daily: '7 Hari Terakhir',
@@ -342,7 +342,7 @@ export default function Reports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Penjualan</p>
-                <p className="text-2xl font-bold text-foreground">{formatFullCurrency(summaryStats.totalSales)}</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(summaryStats.totalSales)}</p>
                 <p className={cn(
                   "text-sm mt-1",
                   summaryStats.salesGrowth >= 0 ? "text-success" : "text-destructive"
@@ -373,7 +373,7 @@ export default function Reports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Rata-rata Transaksi</p>
-                <p className="text-2xl font-bold text-foreground">{formatFullCurrency(summaryStats.avgTransaction)}</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(summaryStats.avgTransaction)}</p>
                 <p className="text-sm text-muted-foreground mt-1">per transaksi</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
@@ -435,7 +435,7 @@ export default function Reports() {
                       borderRadius: '8px',
                       color: 'hsl(var(--foreground))'
                     }}
-                    formatter={(value: number) => [formatFullCurrency(value), 'Penjualan']}
+                    formatter={(value: number) => [formatCurrency(value), 'Penjualan']}
                   />
                   <Bar 
                     dataKey="sales" 
@@ -482,7 +482,7 @@ export default function Reports() {
                       borderRadius: '8px',
                       color: 'hsl(var(--foreground))'
                     }}
-                    formatter={(value: number) => [formatFullCurrency(value), 'Total']}
+                    formatter={(value: number) => [formatCurrency(value), 'Total']}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -533,7 +533,7 @@ export default function Reports() {
                       <p className="text-xs text-muted-foreground">{product.quantity} terjual</p>
                     </div>
                     <p className="font-semibold text-primary text-sm">
-                      {formatFullCurrency(product.revenue)}
+                      {formatCurrency(product.revenue)}
                     </p>
                   </div>
                 ))
@@ -576,7 +576,7 @@ export default function Reports() {
                           </div>
                         </div>
                         <p className="font-semibold text-primary text-sm">
-                          {formatFullCurrency(cashier.revenue)}
+                          {formatCurrency(cashier.revenue)}
                         </p>
                       </div>
                       <div className="h-2 bg-secondary rounded-full overflow-hidden">

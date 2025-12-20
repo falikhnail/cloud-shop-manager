@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/context/StoreContext';
 import { ReceiptData, printReceipt, downloadReceiptPDF } from '@/lib/receiptPrinter';
+import { formatCurrency } from '@/lib/utils';
 
 interface ReceiptDialogProps {
   open: boolean;
@@ -65,8 +66,8 @@ export function ReceiptDialog({ open, onOpenChange, receipt }: ReceiptDialogProp
               <div key={idx}>
                 <p className="truncate">{item.product.name}</p>
                 <div className="flex justify-between text-xs text-gray-600">
-                  <span>{item.quantity} x Rp {item.product.price.toLocaleString('id-ID')}</span>
-                  <span>Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</span>
+                  <span>{item.quantity} x {formatCurrency(item.product.price)}</span>
+                  <span>{formatCurrency(item.product.price * item.quantity)}</span>
                 </div>
               </div>
             ))}
@@ -77,7 +78,7 @@ export function ReceiptDialog({ open, onOpenChange, receipt }: ReceiptDialogProp
           {/* Total */}
           <div className="flex justify-between font-bold">
             <span>TOTAL</span>
-            <span>Rp {receipt.total.toLocaleString('id-ID')}</span>
+            <span>{formatCurrency(receipt.total)}</span>
           </div>
 
           {/* Payment Info */}
@@ -85,9 +86,9 @@ export function ReceiptDialog({ open, onOpenChange, receipt }: ReceiptDialogProp
             <p>Pembayaran: {paymentLabels[receipt.paymentMethod]}</p>
             {receipt.paymentMethod === 'cash' && receipt.customerPaid !== undefined && (
               <>
-                <p>Bayar: Rp {receipt.customerPaid.toLocaleString('id-ID')}</p>
+                <p>Bayar: {formatCurrency(receipt.customerPaid)}</p>
                 {receipt.change !== undefined && (
-                  <p>Kembali: Rp {receipt.change.toLocaleString('id-ID')}</p>
+                  <p>Kembali: {formatCurrency(receipt.change)}</p>
                 )}
               </>
             )}
