@@ -21,9 +21,10 @@ import {
   Search, 
   Download,
   Building2,
-  Wallet
+  Wallet,
+  TrendingUp
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, eachDayOfInterval, eachMonthOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
@@ -31,6 +32,23 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { useStore } from '@/context/StoreContext';
 import { PaymentMethod } from '@/types';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LineChart,
+  Line,
+  Area,
+  AreaChart
+} from 'recharts';
 
 interface SupplierPaymentData {
   id: string;
@@ -170,6 +188,70 @@ export default function SupplierPaymentReport() {
     }, {} as Record<PaymentMethod, number>);
     return { total, byMethod, count: filteredPayments.length };
   }, [filteredPayments]);
+
+  // Chart data - trend over time
+  const trendChartData = useMemo(() => {
+    if (filteredPayments.length === 0) return [];
+
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If more than 60 days, group by month; otherwise group by day
+    if (daysDiff > 60) {
+      const months = eachMonthOfInterval({ start: startDate, end: endDate });
+      return months.map(month => {
+        const monthPayments = filteredPayments.filter(p => isSameMonth(p.paymentDate, month));
+        const total = monthPayments.reduce((sum, p) => sum + p.amount, 0);
+        return {
+          label: format(month, 'MMM yyyy', { locale: localeId }),
+          total,
+          count: monthPayments.length,
+        };
+      });
+    } else {
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      return days.map(day => {
+        const dayPayments = filteredPayments.filter(p => isSameDay(p.paymentDate, day));
+        const total = dayPayments.reduce((sum, p) => sum + p.amount, 0);
+        return {
+          label: format(day, 'dd MMM', { locale: localeId }),
+          total,
+          count: dayPayments.length,
+        };
+      });
+    }
+  }, [filteredPayments, startDate, endDate]);
+
+  // Pie chart data for payment methods
+  const methodChartData = useMemo(() => {
+    const methods: { name: string; value: number; color: string }[] = [];
+    
+    if (summary.byMethod.cash) {
+      methods.push({ name: 'Tunai', value: summary.byMethod.cash, color: 'hsl(var(--success))' });
+    }
+    if (summary.byMethod.transfer) {
+      methods.push({ name: 'Transfer', value: summary.byMethod.transfer, color: 'hsl(var(--primary))' });
+    }
+    if (summary.byMethod.card) {
+      methods.push({ name: 'Kartu', value: summary.byMethod.card, color: 'hsl(var(--warning))' });
+    }
+    
+    return methods;
+  }, [summary.byMethod]);
+
+  // Supplier breakdown data
+  const supplierChartData = useMemo(() => {
+    const bySupplier = filteredPayments.reduce((acc, p) => {
+      acc[p.supplierName] = (acc[p.supplierName] || 0) + p.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(bySupplier)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [filteredPayments]);
+
+  const formatTooltipValue = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
 
   // Export to PDF
   const handleExportPDF = () => {
@@ -477,6 +559,154 @@ export default function SupplierPaymentReport() {
             </div>
           </div>
         </div>
+
+        {/* Charts Section */}
+        {!isLoading && filteredPayments.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '150ms' }}>
+            {/* Trend Chart */}
+            <div className="lg:col-span-2 rounded-lg border border-border bg-card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Tren Pembayaran</h3>
+              </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorPayment" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="label" 
+                      tick={{ fontSize: 12 }} 
+                      tickLine={false}
+                      axisLine={false}
+                      className="fill-muted-foreground"
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => `${(value / 1000000).toFixed(1)}jt`}
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      className="fill-muted-foreground"
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatTooltipValue(value), 'Total']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      fillOpacity={1} 
+                      fill="url(#colorPayment)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Pie Chart - Payment Methods */}
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Wallet className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Metode Pembayaran</h3>
+              </div>
+              <div className="h-[300px]">
+                {methodChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={methodChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {methodChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => formatTooltipValue(value)}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    Tidak ada data
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top Suppliers Chart */}
+        {!isLoading && supplierChartData.length > 0 && (
+          <div className="rounded-lg border border-border bg-card p-6 animate-slide-up" style={{ animationDelay: '180ms' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Building2 className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold text-foreground">Top 5 Supplier (Pembayaran Terbanyak)</h3>
+            </div>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={supplierChartData} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                  <XAxis 
+                    type="number" 
+                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}jt`}
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="fill-muted-foreground"
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={90}
+                    className="fill-muted-foreground"
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatTooltipValue(value), 'Total']}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Bar 
+                    dataKey="total" 
+                    fill="hsl(var(--primary))" 
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* Payments Table */}
         <div className="rounded-lg border border-border bg-card overflow-hidden animate-slide-up" style={{ animationDelay: '200ms' }}>
