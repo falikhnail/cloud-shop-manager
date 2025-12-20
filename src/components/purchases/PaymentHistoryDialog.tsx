@@ -9,7 +9,7 @@ import {
 import { SupplierPayment, PaymentMethod, Purchase } from '@/types';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface PaymentHistoryDialogProps {
   isOpen: boolean;
@@ -53,13 +53,13 @@ export function PaymentHistoryDialog({
             <div className="p-3 rounded-lg bg-secondary/50">
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-sm font-bold text-foreground">
-                Rp {purchase.total.toLocaleString('id-ID')}
+                {formatCurrency(purchase.total)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-success/10">
               <p className="text-xs text-muted-foreground">Terbayar</p>
               <p className="text-sm font-bold text-success">
-                Rp {purchase.paidAmount.toLocaleString('id-ID')}
+                {formatCurrency(purchase.paidAmount)}
               </p>
             </div>
             <div className={cn(
@@ -71,7 +71,7 @@ export function PaymentHistoryDialog({
                 "text-sm font-bold",
                 remaining > 0 ? "text-warning" : "text-success"
               )}>
-                Rp {remaining.toLocaleString('id-ID')}
+                {formatCurrency(remaining)}
               </p>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function PaymentHistoryDialog({
                         </div>
                         <div>
                           <p className="font-medium text-foreground">
-                            Rp {payment.amount.toLocaleString('id-ID')}
+                            {formatCurrency(payment.amount)}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />

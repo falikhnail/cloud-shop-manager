@@ -12,7 +12,7 @@ import { SupplierFormDialog } from '@/components/purchases/SupplierFormDialog';
 import { PaymentFormDialog } from '@/components/purchases/PaymentFormDialog';
 import { PaymentHistoryDialog } from '@/components/purchases/PaymentHistoryDialog';
 import { toast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { PaymentStatus, Purchase, PaymentMethod } from '@/types';
@@ -230,12 +230,12 @@ export default function Purchases() {
                         </td>
                         <td className="p-4 text-right">
                           <span className="font-medium text-foreground">
-                            Rp {purchase.total.toLocaleString('id-ID')}
+                            {formatCurrency(purchase.total)}
                           </span>
                         </td>
                         <td className="p-4 text-right">
                           <span className="font-medium text-success">
-                            Rp {purchase.paidAmount.toLocaleString('id-ID')}
+                            {formatCurrency(purchase.paidAmount)}
                           </span>
                         </td>
                         <td className="p-4 text-right">
@@ -243,7 +243,7 @@ export default function Purchases() {
                             "font-medium",
                             remaining > 0 ? "text-warning" : "text-success"
                           )}>
-                            Rp {remaining.toLocaleString('id-ID')}
+                            {formatCurrency(remaining)}
                           </span>
                         </td>
                         <td className="p-4">

@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProfitReport } from '@/hooks/useProfitReport';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatShortCurrency } from '@/lib/utils';
 import { format, subMonths } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
@@ -43,12 +43,6 @@ export default function ProfitReport() {
     dateRange?.from && dateRange?.to ? { from: dateRange.from, to: dateRange.to } : undefined
   );
 
-  const formatCurrency = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
-  const formatShortCurrency = (value: number) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}jt`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}rb`;
-    return value.toString();
-  };
 
   const clearDateFilter = () => {
     setDateRange(undefined);
