@@ -1,73 +1,208 @@
-# Welcome to your Lovable project
+# 🏪 Sistem Kasir & Manajemen Toko
 
-## Project info
+Sistem Point of Sale (POS) dan manajemen toko modern yang dibangun dengan React dan Supabase. Dirancang untuk membantu bisnis retail mengelola penjualan, inventaris, pembelian, dan laporan keuangan dengan mudah.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+![React](https://img.shields.io/badge/React-18.3-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css)
+![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ✨ Fitur Utama
 
-**Use Lovable**
+### 🛒 Point of Sale (POS)
+- Antarmuka kasir yang intuitif dan responsif
+- Pencarian dan filter produk berdasarkan kategori
+- Keranjang belanja dengan perhitungan otomatis
+- Dukungan berbagai metode pembayaran (Tunai, QRIS, Transfer)
+- Cetak struk/receipt dengan format profesional
+- Kalkulasi kembalian otomatis
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### 📦 Manajemen Produk
+- CRUD produk lengkap (Tambah, Edit, Hapus)
+- Kategori produk untuk organisasi yang lebih baik
+- Pelacakan stok real-time
+- Harga beli dan harga jual terpisah
+- Dukungan gambar produk
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🛍️ Manajemen Pembelian
+- Pencatatan pembelian dari supplier
+- Manajemen supplier lengkap
+- Pelacakan status pembayaran (Lunas, Sebagian, Belum Bayar)
+- Riwayat pembayaran ke supplier
+- Otomatis update stok saat pembelian
 
-**Use your preferred IDE**
+### 💰 Biaya Operasional
+- Pencatatan biaya operasional harian
+- Kategori biaya (Gaji, Listrik, Sewa, dll)
+- Laporan pengeluaran
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 📊 Laporan & Analitik
+- **Dashboard**: Ringkasan penjualan, transaksi, dan stok
+- **Laporan Laba Rugi**: Analisis keuntungan berdasarkan periode
+- **Laporan Transaksi**: Riwayat lengkap semua transaksi
+- **Laporan Pembayaran Supplier**: Tracking hutang dan pembayaran
+- Ekspor laporan ke Excel/PDF
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 👥 Manajemen Pengguna
+- Sistem autentikasi aman
+- Dua role pengguna: **Admin** dan **Kasir**
+- Kontrol akses berdasarkan role
+- Manajemen profil pengguna
 
-Follow these steps:
+### 💾 Backup & Restore Data
+- Ekspor data ke format Excel
+- Import data dari file Excel
+- Riwayat backup tersimpan
+- Dukungan backup partial per tabel
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+### 🎨 Tampilan & UX
+- Desain modern dan responsif
+- Mode Gelap/Terang (Dark/Light mode)
+- PWA ready - dapat diinstall sebagai aplikasi
+- Mobile-friendly untuk penggunaan di tablet/smartphone
+
+---
+
+## 🛠️ Teknologi
+
+| Kategori | Teknologi |
+|----------|-----------|
+| **Frontend** | React 18, TypeScript, Vite |
+| **Styling** | Tailwind CSS, shadcn/ui |
+| **State Management** | React Context, TanStack Query |
+| **Backend** | Supabase (PostgreSQL, Auth, Edge Functions) |
+| **Charts** | Recharts |
+| **Form** | React Hook Form, Zod |
+| **Export** | jsPDF, xlsx |
+
+---
+
+## 📁 Struktur Proyek
+
+```
+src/
+├── components/
+│   ├── dashboard/      # Komponen dashboard (StatCard, DueBillsAlert)
+│   ├── expenses/       # Form & dialog biaya operasional
+│   ├── layout/         # MainLayout, AppSidebar
+│   ├── pos/            # CartPanel, ReceiptDialog
+│   ├── products/       # ProductCard, ProductFormDialog
+│   ├── purchases/      # Form pembelian & pembayaran
+│   ├── ui/             # Komponen shadcn/ui
+│   └── users/          # Manajemen user dialogs
+├── context/
+│   ├── AuthContext     # Autentikasi & session
+│   ├── CartContext     # State keranjang belanja
+│   ├── SidebarContext  # State sidebar
+│   └── StoreContext    # Pengaturan toko
+├── hooks/
+│   ├── useProducts     # CRUD produk
+│   ├── usePurchases    # CRUD pembelian
+│   ├── useExpenses     # CRUD biaya operasional
+│   ├── useTransactions # Simpan transaksi
+│   └── useSuppliers    # CRUD supplier
+├── pages/
+│   ├── Dashboard       # Halaman utama admin
+│   ├── POS             # Halaman kasir
+│   ├── Products        # Manajemen produk
+│   ├── Purchases       # Manajemen pembelian
+│   ├── Expenses        # Biaya operasional
+│   ├── Reports         # Laporan penjualan
+│   ├── ProfitReport    # Laporan laba rugi
+│   └── ...
+└── lib/
+    ├── utils           # Utility functions (formatCurrency, dll)
+    ├── receiptPrinter  # Fungsi cetak struk
+    └── exportReport    # Ekspor laporan
+```
+
+---
+
+## 🚀 Memulai
+
+### Prasyarat
+- Node.js 18+ 
+- npm atau bun
+
+### Instalasi
+
+```bash
+# Clone repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Masuk ke direktori proyek
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Jalankan development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Aplikasi akan berjalan di `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 👤 Role & Akses
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Admin
+- ✅ Dashboard & Statistik
+- ✅ Manajemen Produk
+- ✅ Manajemen Pembelian
+- ✅ Biaya Operasional
+- ✅ Semua Laporan
+- ✅ Manajemen Pengguna
+- ✅ Backup & Restore Data
+- ✅ Pengaturan Toko
 
-## What technologies are used for this project?
+### Kasir
+- ✅ Point of Sale (POS)
+- ✅ Riwayat Transaksi Sendiri
+- ❌ Akses terbatas ke fitur admin
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 💡 Format Mata Uang
 
-## How can I deploy this project?
+Sistem menggunakan format Rupiah Indonesia:
+- **Tampilan**: `Rp 1.500.000`
+- **Input**: Otomatis format dengan pemisah ribuan saat mengetik
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 📱 Progressive Web App (PWA)
 
-Yes, you can!
+Aplikasi ini mendukung instalasi sebagai PWA:
+1. Buka aplikasi di browser
+2. Klik ikon "Install" di address bar
+3. Aplikasi akan terinstall dan dapat diakses offline
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🔐 Keamanan
+
+- Autentikasi berbasis Supabase Auth
+- Row Level Security (RLS) pada database
+- Session management otomatis
+- Password terenkripsi
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dibuat untuk keperluan bisnis retail dan manajemen toko.
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi sangat diterima! Silakan buat Pull Request atau laporkan issue jika menemukan bug.
+
+---
+
+<p align="center">
+  Dibuat dengan ❤️ menggunakan <a href="https://lovable.dev">Lovable</a>
+</p>
