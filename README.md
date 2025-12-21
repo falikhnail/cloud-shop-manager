@@ -204,5 +204,5 @@ Kontribusi sangat diterima! Silakan buat Pull Request atau laporkan issue jika m
 ---
 
 <p align="center">
-  Dibuat dengan ❤️ menggunakan <a href="https://lovable.dev">Lovable</a>
+  Dibuat dengan ❤️
 </p>
