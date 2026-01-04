@@ -1,14 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Search, Calendar, Download, Receipt, Loader2, X, DollarSign, ShoppingCart, TrendingUp, Package } from 'lucide-react';
+import { Search, Calendar, Download, Receipt, Loader2, X, DollarSign, ShoppingCart, TrendingUp, Package, FileText, FileSpreadsheet } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useFetchTransactions } from '@/hooks/useFetchTransactions';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useStore } from '@/context/StoreContext';
+import { toast } from '@/hooks/use-toast';
+import { exportTransactionsToPDF, exportTransactionsToExcel } from '@/lib/exportTransactions';
 
 export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,7 +20,9 @@ export default function Transactions() {
     from: undefined,
     to: undefined,
   });
+  const [isExporting, setIsExporting] = useState(false);
   const { transactions, isLoading } = useFetchTransactions();
+  const { settings } = useStore();
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
@@ -69,6 +75,83 @@ export default function Transactions() {
     setDateRange({ from: undefined, to: undefined });
   };
 
+  const getExportData = () => {
+    const periodStr = dateRange.from && dateRange.to
+      ? `${format(dateRange.from, 'dd MMM yyyy', { locale: id })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: id })}`
+      : 'Semua Waktu';
+
+    return {
+      storeName: settings.name,
+      period: periodStr,
+      dateRange: {
+        start: dateRange.from,
+        end: dateRange.to,
+      },
+      summary: {
+        totalSales: summary.totalSales,
+        totalTransactions: filteredTransactions.length,
+        avgTransaction: summary.avgTransaction,
+        totalItems: summary.totalItems,
+        paymentBreakdown: summary.paymentBreakdown,
+      },
+      transactions: filteredTransactions.map(t => ({
+        id: t.id,
+        transactionId: t.transactionId,
+        cashierName: t.cashierName,
+        paymentMethod: t.paymentMethod,
+        total: t.total,
+        customerPaid: t.customerPaid,
+        change: t.change,
+        createdAt: t.createdAt,
+        items: t.items.map(item => ({
+          id: item.id,
+          productName: item.productName,
+          productPrice: item.productPrice,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+        })),
+      })),
+    };
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const fileName = exportTransactionsToPDF(getExportData());
+      toast({
+        title: "Export Berhasil",
+        description: `File ${fileName} berhasil diunduh`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Gagal",
+        description: "Terjadi kesalahan saat export PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const fileName = exportTransactionsToExcel(getExportData());
+      toast({
+        title: "Export Berhasil",
+        description: `File ${fileName} berhasil diunduh`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Gagal",
+        description: "Terjadi kesalahan saat export Excel",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout requireRole="admin">
@@ -90,10 +173,24 @@ export default function Transactions() {
               Riwayat semua transaksi ({filteredTransactions.length} dari {transactions.length})
             </p>
           </div>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting || filteredTransactions.length === 0}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Filters */}

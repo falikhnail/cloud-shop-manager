@@ -9,6 +9,8 @@ import {
   ArrowDownRight,
   Minus,
   X,
+  FileText,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -27,16 +29,21 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useProfitReport } from '@/hooks/useProfitReport';
+import { useStore } from '@/context/StoreContext';
 import { cn, formatCurrency, formatShortCurrency } from '@/lib/utils';
 import { format, subMonths } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
+import { toast } from '@/hooks/use-toast';
+import { exportProfitReportToPDF, exportProfitReportToExcel } from '@/lib/exportProfitReport';
 
 type ReportPeriod = 'monthly' | 'yearly';
 
 export default function ProfitReport() {
   const [period, setPeriod] = useState<ReportPeriod>('monthly');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [isExporting, setIsExporting] = useState(false);
+  const { settings } = useStore();
   
   const { data, summary, isLoading, dateRange: calculatedDateRange } = useProfitReport(
     period,
@@ -46,6 +53,73 @@ export default function ProfitReport() {
 
   const clearDateFilter = () => {
     setDateRange(undefined);
+  };
+
+  const getExportData = () => {
+    return {
+      storeName: settings.name,
+      periodType: period,
+      dateRange: calculatedDateRange,
+      data: data.map(row => ({
+        period: row.period,
+        revenue: row.revenue,
+        cogs: row.cogs,
+        grossProfit: row.grossProfit,
+        operationalExpenses: row.operationalExpenses,
+        netProfit: row.netProfit,
+        transactionCount: row.transactionCount,
+        itemsSold: row.itemsSold,
+      })),
+      summary: {
+        totalRevenue: summary.totalRevenue,
+        totalCogs: summary.totalCogs,
+        totalGrossProfit: summary.totalGrossProfit,
+        totalOperationalExpenses: summary.totalOperationalExpenses,
+        totalNetProfit: summary.totalNetProfit,
+        totalTransactions: summary.totalTransactions,
+        totalItemsSold: summary.totalItemsSold,
+        grossProfitMargin: summary.grossProfitMargin,
+        netProfitMargin: summary.netProfitMargin,
+      },
+    };
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const fileName = exportProfitReportToPDF(getExportData());
+      toast({
+        title: "Export Berhasil",
+        description: `File ${fileName} berhasil diunduh`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Gagal",
+        description: "Terjadi kesalahan saat export PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const fileName = exportProfitReportToExcel(getExportData());
+      toast({
+        title: "Export Berhasil",
+        description: `File ${fileName} berhasil diunduh`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Gagal",
+        description: "Terjadi kesalahan saat export Excel",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (isLoading) {
@@ -68,6 +142,24 @@ export default function ProfitReport() {
             <p className="text-muted-foreground mt-1">
               {format(calculatedDateRange.start, 'dd MMM yyyy', { locale: localeId })} - {format(calculatedDateRange.end, 'dd MMM yyyy', { locale: localeId })}
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExportPDF}
+              disabled={isExporting || data.length === 0}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExportExcel}
+              disabled={isExporting || data.length === 0}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
           </div>
         </div>
 
